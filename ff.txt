@@ -1,0 +1,331 @@
+POLYNOMIAL 1 : 
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
+# Generate data
+x = np.linspace(-20, 20, 1000).reshape(-1, 1)
+y = x**2 + 2*x + 1
+
+# Normalize data between -1 and +1
+sx = MinMaxScaler(feature_range=(-1, 1))
+sy = MinMaxScaler(feature_range=(-1, 1))
+x = sx.fit_transform(x)
+y = sy.fit_transform(y)
+
+# Split data: 80% train, 10% validation, 10% test
+x_train, x_temp, y_train, y_temp = train_test_split(
+    x, y, test_size=0.2, random_state=42
+)
+x_val, x_test, y_val, y_test = train_test_split(
+    x_temp, y_temp, test_size=0.5, random_state=42
+)
+
+# Create DNN
+model = Sequential([
+    Dense(32, activation='relu', input_shape=(1,)),
+    Dense(64, activation='relu'),
+    Dense(128, activation='relu'),
+    Dense(1, activation='linear')
+])
+
+# Display DNN and parameters
+model.summary()
+
+# Compile model
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+
+# Train model
+history = model.fit(
+    x_train, y_train,
+    epochs=200,
+    batch_size=32,
+    validation_data=(x_val, y_val),
+    verbose=1
+)
+
+# Test the model
+test_loss, test_mae = model.evaluate(x_test, y_test, verbose=0)
+print("Test Error:", test_loss)
+print("Test MAE:", test_mae)
+
+# Plot training and validation accuracy (MAE)
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(history.history['mae'], label='Training Accuracy')
+plt.plot(history.history['val_mae'], label='Validation Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('MAE')
+plt.title('Training vs Validation Accuracy')
+plt.legend()
+plt.grid()
+
+# Plot training and validation error (MSE)
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Training Error')
+plt.plot(history.history['val_loss'], label='Validation Error')
+plt.xlabel('Epoch')
+plt.ylabel('MSE')
+plt.title('Training vs Validation Error')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+ASSIGNMENT 2:
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Flatten, Dense, Input
+
+# 1. Load MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# 2. Display handwritten digits
+plt.figure(figsize=(10, 4))
+
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x_train[i], cmap='gray')
+    plt.title(str(y_train[i]))
+    plt.axis('off')
+
+plt.show()
+
+# 3. Normalize data
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+# Add channel dimension
+x_train = x_train.reshape(-1, 28, 28, 1)
+x_test = x_test.reshape(-1, 28, 28, 1)
+
+# 4. Create CNN model
+model = Sequential([
+    Input(shape=(28, 28, 1)),
+
+    Conv2D(32, (3, 3), activation='relu', padding='same'),
+    MaxPooling2D(pool_size=(3, 3), strides=(1, 1)),
+
+    Conv2D(64, (3, 3), activation='relu', padding='same'),
+    MaxPooling2D(pool_size=(3, 3), strides=(1, 1)),
+
+    Flatten(),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# 5. Display CNN architecture
+model.summary()
+
+# 6. Compile model
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+# 7. Train model
+history = model.fit(
+    x_train, y_train,
+    epochs=5,
+    batch_size=64,
+    validation_data=(x_test, y_test)
+)
+
+# 8. Evaluate model on test data
+test_loss, test_accuracy = model.evaluate(x_test, y_test)
+
+print("Training Accuracy:", history.history['accuracy'][-1])
+print("Testing Accuracy:", test_accuracy)
+
+# 9. Plot training accuracy vs testing accuracy
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Testing Accuracy')
+
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.title('Training Accuracy vs Testing Accuracy')
+plt.legend()
+plt.grid()
+plt.show()
+
+
+
+
+
+ASSIGNMENT3: 
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Flatten, Dense, Input
+
+# 1. Load MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# 2. Display numbers (0 to 9)
+plt.figure(figsize=(10, 4))
+
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x_train[i], cmap='gray')
+    plt.title(str(y_train[i]))
+    plt.axis('off')
+
+plt.suptitle("Handwritten Digits (0-9)")
+plt.show()
+
+# 3. Display odd numbers only (1, 3, 5, 7, 9)
+plt.figure(figsize=(10, 4))
+
+odd_count = 0
+for i in range(len(y_train)):
+    if y_train[i] % 2 != 0:
+        plt.subplot(1, 5, odd_count + 1)
+        plt.imshow(x_train[i], cmap='gray')
+        plt.title(str(y_train[i]))
+        plt.axis('off')
+        odd_count += 1
+
+        if odd_count == 5:
+            break
+
+plt.suptitle("Odd Digits Only")
+plt.show()
+
+# 4. Normalize data
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+# Add channel dimension
+x_train = x_train.reshape(-1, 28, 28, 1)
+x_test = x_test.reshape(-1, 28, 28, 1)
+
+# 5. Create CNN model
+model = Sequential([
+    Input(shape=(28, 28, 1)),
+
+    Conv2D(32, (3, 3), activation='relu', padding='same'),
+    MaxPooling2D(pool_size=(3, 3), strides=(1, 1)),
+
+    Conv2D(64, (3, 3), activation='relu', padding='same'),
+    MaxPooling2D(pool_size=(3, 3), strides=(1, 1)),
+
+    Flatten(),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# 6. Display model architecture and parameters
+model.summary()
+
+# 7. Compile model
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+# 8. Train model
+history = model.fit(
+    x_train, y_train,
+    epochs=5,
+    batch_size=64,
+    validation_data=(x_test, y_test)
+)
+
+# 9. Test the model
+test_loss, test_accuracy = model.evaluate(x_test, y_test, verbose=0)
+
+print("Training Accuracy:", history.history['accuracy'][-1])
+print("Testing Accuracy:", test_accuracy)
+
+# 10. Plot training accuracy vs testing accuracy
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Testing Accuracy')
+
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.title('Training Accuracy vs Testing Accuracy')
+plt.legend()
+plt.grid()
+plt.show()
+
+
+
+
+
+
+
+
+MNIST: 
+
+from tensorflow.keras.datasets.mnist import load_data
+import matplotlib.pyplot as plt
+import numpy as np
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.layers import Input, Flatten, Dense
+from tensorflow.keras.models import Model
+
+def display_img(img_set, title_set):
+  n = len(title_set)
+  for i in range(n):
+    plt.subplot(3, 3, i + 1)
+    plt.imshow(img_set[i], cmap = 'gray')
+    plt.title(title_set[i])
+  plt.show()
+  plt.close()
+
+(trainX, trainY), (testX, testY) = load_data()
+display_img(trainX[:9], trainY[:9])
+
+
+inputs = Input((28, 28, 1), name = 'InputLayer')
+x = Flatten()(inputs)
+x = Dense(2, activation = 'relu')(x)
+x = Dense(4, activation = 'relu')(x)
+x = Dense(8, activation = 'relu')(x)
+x = Dense(16, activation = 'relu')(x)
+x = Dense(8, activation = 'relu')(x)
+x = Dense(4, activation = 'relu')(x)
+outputs = Dense(10, name = 'OutputLayer', activation = 'softmax')(x)
+model = Model(inputs, outputs, name = 'Multi-Class-Classifier')
+model.summary()
+
+trainX = np.expand_dims(trainX, axis = -1)
+testX = np.expand_dims(testX, axis = -1)
+trainY = to_categorical(trainY, num_classes = 10)
+testY = to_categorical(testY, num_classes = 10)
+
+model.compile(loss = 'categorical_crossentropy', metrics = ['accuracy'])
+history = model.fit(trainX, trainY, batch_size = 32, epochs = 10, validation_data=(testX, testY))
+
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['loss'], label='Training Loss', color='blue')
+plt.plot(history.history['val_loss'], label='Validation Loss', color='red')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
