@@ -391,5 +391,114 @@ names = ["Airplane", "Automobile", "Truck"]
 
 for i in range(10):
     print("Actual:", names[y_test[i]], "| Predicted:", names[predictions[i]])
+    
+    
+    
+    
+    
+    
+MobileNetWith3Plot:
+
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras import layers
+from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.applications.mobilenet import preprocess_input
+from tensorflow.keras.datasets import cifar10
+
+IMAGE_SIZE = 96
+EPOCHS = 5
+names = ["Airplane", "Automobile", "Truck"]
+
+(X_train, y_train), (X_test, y_test) = cifar10.load_data()
+
+y_train = y_train.flatten()
+y_test = y_test.flatten()
+
+train_mask = np.isin(y_train, [0, 1, 9])
+test_mask = np.isin(y_test, [0, 1, 9])
+
+X_train, y_train = X_train[train_mask], y_train[train_mask]
+X_test, y_test = X_test[test_mask], y_test[test_mask]
+
+y_train[y_train == 9] = 2
+y_test[y_test == 9] = 2
+
+# Plot 1: Sample Images
+plt.figure(figsize=(10, 4))
+
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(X_train[i])
+    plt.title(names[y_train[i]])
+    plt.axis("off")
+
+plt.tight_layout()
+plt.show()
+
+base_model = MobileNet(
+    weights="imagenet",
+    include_top=False,
+    input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3),
+    pooling="avg"
+)
+base_model.trainable = False
+
+model = tf.keras.Sequential([
+    layers.Input(shape=(32, 32, 3)),
+    layers.Resizing(IMAGE_SIZE, IMAGE_SIZE),
+    layers.Lambda(preprocess_input),
+    base_model,
+    layers.Dense(3, activation="softmax")
+])
+
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+history = model.fit(
+    X_train, y_train,
+    epochs=EPOCHS,
+    validation_split=0.2
+)
+
+loss, accuracy = model.evaluate(X_test, y_test)
+print("Test Accuracy:", accuracy)
+
+# Plot 2: Accuracy
+plt.plot(history.history["accuracy"], label="Training Accuracy")
+plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
+plt.title("Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.show()
+
+# Plot 3: Loss
+plt.plot(history.history["loss"], label="Training Loss")
+plt.plot(history.history["val_loss"], label="Validation Loss")
+plt.title("Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend()
+plt.show()
+
+predictions = np.argmax(model.predict(X_test[:10]), axis=1)
+
+for i in range(10):
+    print("Actual:", names[y_test[i]], "| Predicted:", names[predictions[i]])
+    
+    
+    
+    
+    
+    git@github.com:RuhulAmin2247/ff.git
+    https://github.com/RuhulAmin2247/ff
+
+
+
 
 
